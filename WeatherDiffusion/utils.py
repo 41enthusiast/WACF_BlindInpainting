@@ -1,4 +1,5 @@
-
+import yaml
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,10 +11,43 @@ import math
 import numpy as np
 import torch.backends.cudnn as cudnn
 from model import DiffusionUNet
+from dataset.utils import data_transform, inverse_data_transform
+from logging_utils import *
+
+################################################################################################################
+# Architecture Configurations
+################################################################################################################
+
+def dict2namespace(config):
+    namespace = argparse.Namespace()
+    for key, value in config.items():
+        if isinstance(value, dict):
+            new_value = dict2namespace(value)
+        else:
+            new_value = value
+        setattr(namespace, key, new_value)
+    return namespace
+
+def parse_args_and_config():
+    config = 'config/allweather.yml'
+    resume = 'ckpts/AllWeather_ddpm.pth.tar'
+    test_set = 'art_painting'
+    sampling_timesteps = 25
+    grid_r = 16
+    seed = 61
+    image_folder = 'results/images/'
+
+    with open(config, "r") as f:
+        config = yaml.safe_load(f)
+    new_config = dict2namespace(config)
+
+    return resume, test_set, sampling_timesteps, grid_r, seed, image_folder, new_config
+
 
 ################################################################################################################
 # Sampling
 ################################################################################################################
+
 def compute_alpha(beta, t):
     beta = torch.cat([torch.zeros(1).to(beta.device), beta], dim=0)
     a = (1 - beta).cumprod(dim=0).index_select(0, t + 1).view(-1, 1, 1, 1)
@@ -87,27 +121,7 @@ def generalized_steps_overlapping(x, x_cond, seq, model, b, eta=0., corners=None
             xs.append(xt_next.to('cpu'))
     return xs, x0_preds
 
-################################################################################################################
-# Logging
-################################################################################################################
 
-def save_image(img, file_directory):
-    if not os.path.exists(os.path.dirname(file_directory)):
-        os.makedirs(os.path.dirname(file_directory))
-    tvu.save_image(img, file_directory)
-    
-def save_checkpoint(state, filename):
-    if not os.path.exists(os.path.dirname(filename)):
-        os.makedirs(os.path.dirname(filename))
-    torch.save(state, filename + '.pth.tar')
-
-
-def load_checkpoint(path, device):
-    if device is None:
-        return torch.load(path, weights_only=False)
-    else:
-        return torch.load(path, map_location=device, weights_only=False)
-    
 ################################################################################################################
 # Optimization
 ################################################################################################################
@@ -176,44 +190,8 @@ class EMAHelper(object):
         self.shadow = state_dict
 
 ################################################################################################################
-# Transformations
-################################################################################################################
-
-def nonlinearity(x):
-    # swish
-    return x*torch.sigmoid(x)
-
-def data_transform(X):
-    return 2 * X - 1.0
-
-def inverse_data_transform(X):
-    return torch.clamp((X + 1.0) / 2.0, 0.0, 1.0)
-
-################################################################################################################
 # Diffusion Utils
 ################################################################################################################
-
-
-
-def get_timestep_embedding(timesteps, embedding_dim):
-    """
-    This matches the implementation in Denoising Diffusion Probabilistic Models:
-    From Fairseq.
-    Build sinusoidal embeddings.
-    This matches the implementation in tensor2tensor, but differs slightly
-    from the description in Section 3.5 of "Attention Is All You Need".
-    """
-    assert len(timesteps.shape) == 1
-
-    half_dim = embedding_dim // 2
-    emb = math.log(10000) / (half_dim - 1)
-    emb = torch.exp(torch.arange(half_dim, dtype=torch.float32) * -emb)
-    emb = emb.to(device=timesteps.device)
-    emb = timesteps.float()[:, None] * emb[None, :]
-    emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
-    if embedding_dim % 2 == 1:  # zero pad
-        emb = torch.nn.functional.pad(emb, (0, 1, 0, 0))
-    return emb
 
 def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_timesteps):
     def sigmoid(x):

@@ -5,6 +5,7 @@ from torchvision.transforms import RandomCrop
 import glob
 import os
 from PIL import Image
+from torch.utils.data import Dataset
 
 class TrainDataset(Dataset):
     def __init__(self, data_path, data_path_test, data_name, data_type, patch_size=None, length=None):

@@ -61,7 +61,7 @@ def save_loop(net, data_loader, num_iter):
 
 if __name__ == '__main__':
     args = parse_args()
-    test_dataset = TrainDataset('art_painting/train', 'art_painting/test', args.data_name, 'test')
+    test_dataset = TrainDataset('../../data/art_painting/train', '../../data/art_painting/test', args.data_name, 'test')
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=args.workers)
     perceptual_loss = VGGPerceptualLoss().cuda()
     results, best_psnr, best_ssim = {'PSNR': [], 'SSIM': []}, 0.0, 0.0
@@ -81,8 +81,8 @@ if __name__ == '__main__':
                 end_iter = args.milestone[i] if i < len(args.milestone) else args.num_iter
                 start_iter = args.milestone[i - 1] if i > 0 else 0
                 length = args.batch_size[i] * (end_iter - start_iter)
-                train_dataset = TrainDataset('art_painting/train', 'art_painting/test', args.data_name, 'train', args.patch_size[i], length)
-                train_loader = iter(DataLoader(train_dataset, args.batch_size[i]*8, True, num_workers=args.workers))
+                train_dataset = TrainDataset('../../data/art_painting/train', '../../data/art_painting/test', args.data_name, 'train', args.patch_size[i], length)
+                train_loader = iter(DataLoader(train_dataset, args.batch_size[i]*2, True, num_workers=args.workers))
                 i += 1
             # train
             model.train()

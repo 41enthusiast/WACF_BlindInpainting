@@ -1,26 +1,13 @@
 from torch.utils.data import DataLoader
 import yaml
-from utils import dict2namespace, DenoisingDiffusion
+from utils import DenoisingDiffusion, parse_args_and_config
 import torch
 from dataset.artpainting_processed import ArtPainting_processed
 import numpy as np
 
-def parse_args_and_config():
-    config = 'allweather.yml'
-    resume = 'Art_Dataset_ddpm.pth.tar'
-    test_set = 'art_painting'
-    sampling_timesteps = 25
-    grid_r = 16
-    seed = 61
-    image_folder = 'results/images/'
 
-    with open(config, "r") as f:
-        config = yaml.safe_load(f)
-    new_config = dict2namespace(config)
-
-    return resume, test_set, sampling_timesteps, grid_r, seed, image_folder, new_config
-
-
+print(torch.cuda.get_device_name(0)); print(torch.cuda.get_arch_list())
+print(torch.__version__)
 resume, test_set, sampling_timesteps, grid_r, seed, image_folder, config = parse_args_and_config()
 
 # setup device to run

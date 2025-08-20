@@ -1,0 +1,9 @@
+*results/
+*ckpts/
+*.ckpt
+*.txt
+*__pycache__
+*weath_diff
+OmniWavNet/test_places/
+test1_agbi/
+agbi_diff/

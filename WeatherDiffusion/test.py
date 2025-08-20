@@ -1,24 +1,10 @@
 import torch
 import numpy as np
 import yaml
-from utils import dict2namespace
+from utils import parse_args_and_config
 from model import DenoisingDiffusion, DiffusiveRestoration
 from dataset.artpainting_processed import ArtPainting_processed
 
-def parse_args_and_config():
-    config = 'allweather.yml'
-    resume = '/content/art_painting/ckpts/AllWeather_ddpm.pth.tar'
-    test_set = 'art_painting'
-    sampling_timesteps = 25
-    grid_r = 16
-    seed = 61
-    image_folder = 'results/images/'
-
-    with open(config, "r") as f:
-        config = yaml.safe_load(f)
-    new_config = dict2namespace(config)
-
-    return resume, test_set, sampling_timesteps, grid_r, seed, image_folder, new_config
 
 resume, test_set, sampling_timesteps, grid_r, seed, image_folder, config = parse_args_and_config()
 
